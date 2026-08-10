@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Modération — BIC 4 Couleurs</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="bandeau-4c"><span></span><span></span><span></span><span></span></div>
+<header>
+  <h1>Modération</h1>
+  <nav>
+    <a href="accueil.html">Accueil</a>
+    <a href="index.html">Catalogue</a>
+    <a href="annonces.html">Annonces en vente</a>
+    <a href="#" id="lien-profil" style="display:none;">Mon profil</a>
+    <a href="#" id="lien-connexion">Se connecter</a>
+  </nav>
+</header>
+
+<div id="zone-refus" style="display:none;">
+  <p>Accès réservé aux comptes administrateurs.</p>
+</div>
+
+<div id="zone-moderation" style="display:none;">
+  <h2>Fiches stylos en attente</h2>
+  <div id="liste-stylos-attente" class="grille-stylos"></div>
+
+  <h2>Annonces en attente</h2>
+  <div id="liste-annonces-attente" class="grille-stylos"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/supabaseClient.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/ajouter.js"></script>
+<script src="js/moderation.js"></script>
+</body>
+</html>

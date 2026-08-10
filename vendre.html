@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vendre un stylo — BIC 4 Couleurs</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="bandeau-4c"><span></span><span></span><span></span><span></span></div>
+<header>
+  <h1>Mettre un stylo en vente</h1>
+  <nav>
+    <a href="accueil.html">Accueil</a>
+    <a href="index.html">Catalogue</a>
+    <a href="annonces.html">Annonces en vente</a>
+<a href="#" id="lien-ajouter">Ajouter un stylo</a>    <a href="mes-messages.html">Mes messages</a>
+    <a href="#" id="lien-profil" style="display:none;">Mon profil</a>
+    <a href="#" id="lien-connexion">Se connecter</a>
+  </nav>
+</header>
+
+<div id="zone-non-connecte" style="display:none;">
+  <p>Tu dois être connecté pour vendre un stylo.</p>
+</div>
+
+<div id="info-stylo"></div>
+<div id="zone-possession" style="margin-bottom: 1.5rem;"></div>
+
+<form id="form-vente" class="formulaire" style="display:none;">
+  <label>Prix de vente (€)
+    <input type="number" step="0.01" id="prix" required>
+  </label>
+  <label>Description de l'annonce (état, détails...)
+    <textarea id="description-annonce"></textarea>
+  </label>
+  <button type="submit">Publier l'annonce</button>
+  <p id="message-vente"></p>
+</form>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/supabaseClient.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/ajouter.js"></script>
+<script src="js/vendre.js"></script>
+</body>
+</html>

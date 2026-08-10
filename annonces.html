@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Annonces en vente — BIC 4 Couleurs</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="bandeau-4c"><span></span><span></span><span></span><span></span></div>
+<header>
+  <h1>Annonces en vente</h1>
+  <nav>
+    <a href="accueil.html">Accueil</a>
+    <a href="index.html">Catalogue</a>
+    <a href="annonces.html" class="active">Annonces en vente</a>
+<a href="#" id="lien-ajouter">Ajouter un stylo</a>    <a href="mes-messages.html">Mes messages</a>
+    <a href="#" id="lien-profil" style="display:none;">Mon profil</a>
+    <a href="#" id="lien-connexion">Se connecter</a>
+  </nav>
+</header>
+
+<p style="max-width: 500px; color: #6B6558; margin-bottom: 0.8rem;">
+  Le paiement en ligne sera bientôt disponible. En attendant, contacte le vendeur pour vous mettre d'accord sur les modalités (virement, PayPal, remise en main propre...). Clique sur une annonce pour voir tous les détails et le profil du vendeur.
+</p>
+
+<button onclick="ouvrirModaleAjout()" class="bouton-vendre" style="display: inline-block; margin-bottom: 1.5rem;">Ajouter un stylo</button>
+<div id="section-favoris" class="section-favoris" style="display:none;">
+  <h2>Favoris</h2>
+  <div id="liste-favoris" class="grille-stylos"></div>
+</div>
+
+<div id="liste-annonces" class="grille-stylos">
+  <p>Chargement des annonces...</p>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/supabaseClient.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/ajouter.js"></script>
+<script src="js/contact.js"></script>
+<script src="js/annonces.js"></script>
+</body>
+</html>

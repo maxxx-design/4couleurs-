@@ -1,18 +1,70 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Catalogue BIC 4 Couleurs</title>
-  <link rel="stylesheet" href="css/style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Catalogue — BIC 4 Couleurs</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
 </head>
 <body>
+<div class="bandeau-4c"><span></span><span></span><span></span><span></span></div>
+<header>
   <h1>Catalogue BIC 4 Couleurs</h1>
-  <div id="test-connexion">Connexion à Supabase en cours...</div>
+  <nav>
+    <a href="accueil.html">Accueil</a>
+    <a href="index.html" class="active">Catalogue</a>
+    <a href="annonces.html">Annonces en vente</a>
+<a href="#" id="lien-ajouter">Ajouter un stylo</a>    <a href="mes-messages.html">Mes messages</a>
+    <a href="#" id="lien-profil" style="display:none;">Mon profil</a>
+    <a href="#" id="lien-connexion">Se connecter</a>
+  </nav>
+</header>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/config.js"></script>
-  <script src="js/supabaseClient.js"></script>
-  <script src="js/test.js"></script>
+<div class="filtres">
+  <input type="text" id="recherche" placeholder="Rechercher un stylo, une ville, une entreprise...">
+  <select id="filtre-categorie">
+    <option value="">Trier : tout le catalogue</option>
+    <option value="touristique">Trier : Touristique</option>
+    <option value="publicitaire">Trier : Publicitaire</option>
+  </select>
+  <select id="filtre-sous-categorie" style="display:none;">
+    <option value="">Toutes sous-catégories</option>
+  </select>
+  <select id="filtre-rarete">
+  <option value="">Raretés</option>
+    <option value="commun">Commun</option>
+    <option value="peu_commun">Peu commun</option>
+    <option value="rare">Rare</option>
+    <option value="tres_rare">Très rare</option>
+    <option value="exceptionnel">Exceptionnel</option>
+  </select>
+  <select id="filtre-pays">
+  <option value="">Pays</option>
+</select>
+</div>
+
+<div id="carte" style="height: 400px; margin-bottom: 1.5rem; border-radius: 8px;"></div>
+
+<div id="section-favoris" class="section-favoris" style="display:none;">
+  <h2>Favoris</h2>
+  <div id="liste-favoris" class="grille-stylos"></div>
+</div>
+
+<div id="liste-stylos" class="grille-stylos">
+  <p>Chargement du catalogue...</p>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/supabaseClient.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/ajouter.js"></script>
+<script src="js/catalogue.js"></script>
 </body>
 </html>
