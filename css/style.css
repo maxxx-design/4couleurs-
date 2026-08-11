@@ -167,7 +167,8 @@ nav a#lien-connexion {
 .photo-carte {
   width: 100%;
   height: 160px;
-  object-fit: cover;
+  object-fit: contain;
+  background: #EDEAE3;
   display: block;
 }
 .photo-manquante {
@@ -211,9 +212,9 @@ nav a#lien-connexion {
 .badge-raison {
   display: inline-block;
   margin: 0.3rem 0;
-  background: #FFF4E5;
-  color: #9A5B00;
-  border: 1px solid #E0A030;
+  background: var(--bic-bleu);
+  color: #ffffff;
+  border: 1px solid var(--bic-bleu);
   padding: 0.15rem 0.6rem;
   border-radius: 2px;
   font-size: 0.72rem;
@@ -228,11 +229,11 @@ nav a#lien-connexion {
 .bouton-vendre {
   display: inline-block;
   margin-top: 0.7rem;
-  background: var(--encre);
+  background: var(--bic-bleu);
   color: white;
   text-decoration: none;
-  padding: 0.5rem 1rem;
-  border-radius: 2px;
+  padding: 0.55rem 1.1rem;
+  border-radius: 999px;
   font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -248,7 +249,7 @@ nav a#lien-connexion {
   border: 1px solid var(--bic-rouge);
   text-decoration: none;
   padding: 0.5rem 1rem;
-  border-radius: 2px;
+  border-radius: 999px;
   font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -325,10 +326,11 @@ nav a#lien-connexion {
   border: 1px solid var(--ligne-forte);
 }
 .fond-accueil {
-  background: linear-gradient(135deg, var(--bic-bleu) 0%, var(--bic-bleu) 25%,
-  var(--bic-rouge) 25%, var(--bic-rouge) 50%, var(--bic-vert) 50%, var(--bic-vert) 75%,
-  var(--encre) 75%);
-  background-size: 200% 200%;
+  background: linear-gradient(135deg,
+    var(--bic-bleu) 0%, var(--bic-bleu) 25%,
+    var(--bic-rouge) 25%, var(--bic-rouge) 50%,
+    var(--bic-vert) 50%, var(--bic-vert) 75%,
+    var(--encre) 75%, var(--encre) 100%);
   border-radius: 4px;
   padding: 3.5rem 2rem;
   display: flex;
@@ -466,7 +468,8 @@ nav a#lien-connexion {
 .modale-detail-photo {
   width: 100%;
   height: 220px;
-  object-fit: cover;
+  object-fit: contain;
+  background: #EDEAE3;
   border-radius: 2px;
 }
 .mini-profil-vendeur {
@@ -715,4 +718,252 @@ nav a#lien-connexion {
   border-radius: 2px;
   cursor: pointer;
   border: 1px solid var(--ligne-forte);
+}
+.info-rarete {
+  cursor: help;
+  color: var(--bic-bleu);
+  font-weight: 700;
+  margin-left: 0.3rem;
+}
+.stats-annonce {
+  display: flex;
+  gap: 0.9rem;
+  font-size: 0.75rem;
+  color: #6B6558;
+  margin: 0.3rem 0;
+}
+.zone-region-toggle input[readonly] {
+  background: #EDEAE3;
+  color: #6B6558;
+}
+.aide-champ {
+  font-size: 0.75rem;
+  color: #6B6558;
+  text-transform: none;
+  font-weight: normal;
+  letter-spacing: normal;
+  margin-top: -0.6rem;
+}
+footer.pied-de-page {
+  margin-top: 3rem;
+  padding-top: 1.2rem;
+  border-top: 1px solid var(--ligne);
+  color: #6B6558;
+  font-size: 0.75rem;
+}
+/* ---- Thème visuel repris des 4 couleurs du stylo ---- */
+
+.formulaire input:focus, .formulaire select:focus, .formulaire textarea:focus {
+  outline: 2px solid var(--bic-bleu);
+  outline-offset: 1px;
+}
+.bouton-vendre:hover {
+  filter: brightness(0.88);
+}
+.bouton-refuser:hover {
+  background: var(--bic-rouge);
+  color: white;
+}
+
+/* ---- Badge de rareté colorimétrique ---- */
+.badge-rarete {
+  display: inline-block;
+  padding: 0.2rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  margin: 0.3rem 0;
+}
+
+/* ---- Boutons de type dans le formulaire d'ajout ---- */
+.selecteur-type {
+  display: flex;
+  gap: 0.6rem;
+}
+.option-type {
+  flex: 1;
+  text-align: center;
+  padding: 1rem 0.6rem;
+  border: 1px solid var(--ligne-forte);
+  border-radius: 2px;
+  cursor: pointer;
+  font-family: 'Fraunces', serif;
+  background: white;
+}
+.option-type.selectionnee {
+  border-width: 2px;
+  border-color: var(--bic-bleu);
+  background: #EEF3FB;
+  font-weight: 600;
+}
+.bloc-conditionnel {
+  border-left: 3px solid var(--ligne-forte);
+  padding-left: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+.bouton-toggle-annonce {
+  background: transparent;
+  border: 1px dashed var(--ligne-forte);
+  color: var(--encre);
+  padding: 0.7rem;
+  border-radius: 2px;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+.bouton-toggle-annonce.actif {
+  border-style: solid;
+  border-color: var(--bic-vert);
+  background: #E9F5EF;
+}
+/* ---- Niveau 1 : survol de lien en cycle des 4 couleurs ---- */
+nav a:nth-child(4n+1):hover { color: var(--bic-bleu); border-bottom: 2px solid var(--bic-bleu); }
+nav a:nth-child(4n+2):hover { color: var(--bic-rouge); border-bottom: 2px solid var(--bic-rouge); }
+nav a:nth-child(4n+3):hover { color: var(--bic-vert); border-bottom: 2px solid var(--bic-vert); }
+nav a:nth-child(4n+4):hover { color: var(--encre); border-bottom: 2px solid var(--encre); }
+
+/* ---- Niveau 1 : encoche colorée en cycle (couplé au ::before de .carte-stylo) ---- */
+.grille-stylos > *:nth-child(4n+1) .carte-stylo,
+.grille-stylos > *:nth-child(4n+1).carte-stylo { --couleur-encoche: var(--bic-bleu); }
+.grille-stylos > *:nth-child(4n+2) .carte-stylo,
+.grille-stylos > *:nth-child(4n+2).carte-stylo { --couleur-encoche: var(--bic-rouge); }
+.grille-stylos > *:nth-child(4n+3) .carte-stylo,
+.grille-stylos > *:nth-child(4n+3).carte-stylo { --couleur-encoche: var(--bic-vert); }
+.grille-stylos > *:nth-child(4n+4) .carte-stylo,
+.grille-stylos > *:nth-child(4n+4).carte-stylo { --couleur-encoche: var(--encre); }
+
+/* ---- Niveau 2 : loader 4 couleurs ---- */
+.zone-chargement {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  justify-content: center;
+  padding: 2.5rem 1rem;
+  color: #6B6558;
+  font-size: 0.85rem;
+}
+.chargement-4c {
+  display: inline-block;
+  width: 26px;
+  height: 26px;
+  position: relative;
+  animation: rotation-4c 0.9s linear infinite;
+  flex-shrink: 0;
+}
+.chargement-4c span { position: absolute; width: 50%; height: 50%; }
+.chargement-4c span:nth-child(1) { top: 0; left: 0; background: var(--bic-bleu); border-radius: 100% 0 0 0; }
+.chargement-4c span:nth-child(2) { top: 0; right: 0; background: var(--bic-rouge); border-radius: 0 100% 0 0; }
+.chargement-4c span:nth-child(3) { bottom: 0; left: 0; background: var(--bic-vert); border-radius: 0 0 0 100%; }
+.chargement-4c span:nth-child(4) { bottom: 0; right: 0; background: var(--encre); border-radius: 0 0 100% 0; }
+@keyframes rotation-4c { to { transform: rotate(360deg); } }
+
+/* ---- Niveau 2 : case à cocher façon bouton-poussoir ---- */
+.case-possession-stylisee {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--ligne-forte);
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.1s ease, border-color 0.15s ease, background 0.15s ease;
+}
+.case-possession-stylisee:checked {
+  border-color: var(--bic-rouge);
+  background: var(--bic-rouge);
+}
+.case-possession-stylisee:active { transform: scale(0.85); }
+.case-possession-stylisee:checked::after {
+  content: "";
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 8px; height: 8px;
+  background: #ffffff;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* ---- Niveau 2 : barre de défilement personnalisée ---- */
+* { scrollbar-color: var(--bic-bleu) var(--papier); scrollbar-width: thin; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--papier); }
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--bic-bleu), var(--bic-rouge), var(--bic-vert), var(--encre));
+  border-radius: 6px;
+}
+
+/* ---- Niveau 3 : logo ---- */
+.marque {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  color: var(--encre);
+  margin-bottom: 0.6rem;
+}
+.marque img { width: 22px; height: 22px; }
+.marque span {
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+}
+h1 .logo-marque-inline {
+  width: 0.85em;
+  height: 0.85em;
+  vertical-align: -0.1em;
+  margin-right: 0.25em;
+}
+
+/* ---- Niveau 3 : fond de popup au motif diagonal ---- */
+.modale-auth-boite, .modale-annonce-boite {
+  position: relative;
+  overflow: hidden;
+}
+.modale-auth-boite::before, .modale-annonce-boite::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  right: -35%;
+  width: 75%;
+  height: 200%;
+  background: linear-gradient(135deg,
+    var(--bic-bleu) 0%, var(--bic-bleu) 25%,
+    var(--bic-rouge) 25%, var(--bic-rouge) 50%,
+    var(--bic-vert) 50%, var(--bic-vert) 75%,
+    var(--encre) 75%, var(--encre) 100%);
+  opacity: 0.055;
+  transform: rotate(15deg);
+  pointer-events: none;
+  z-index: 0;
+}
+.modale-auth-boite > *, .modale-annonce-boite > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ---- Favoris texte (sans emoji) ---- */
+.bouton-favori-texte {
+  background: transparent;
+  border: 1px solid var(--ligne-forte);
+  color: var(--encre);
+  padding: 0.25rem 0.7rem;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  float: right;
+}
+.bouton-favori-texte.favori-actif {
+  background: var(--bic-rouge);
+  border-color: var(--bic-rouge);
+  color: #ffffff;
 }

@@ -1,9 +1,9 @@
-// annonces.js — liste des annonces actives + popup de détail avec mini-profil vendeur
-// (contacterVendeur vit maintenant dans contact.js, partagé avec fiche-stylo.html)
+// annonces.js — popup de détail, favoris publics, vues réservées au vendeur
 
 let idsFavorisAnnonces = new Set();
 let monIdUtilisateurAnnonces = null;
 let toutesLesAnnonces = [];
+let monEstAdmin = false;
 
 async function chargerAnnonces() {
   const container = document.getElementById("liste-annonces");
@@ -11,6 +11,12 @@ async function chargerAnnonces() {
 
   if (sessionFavoris) {
     monIdUtilisateurAnnonces = sessionFavoris.user.id;
+    const { data: profilConnecte } = await supabaseClient
+      .from("profils")
+      .select("est_admin")
+      .eq("id", monIdUtilisateurAnnonces)
+      .maybeSingle();
+    monEstAdmin = profilConnecte ? profilConnecte.est_admin : false;
     const { data: favoris } = await supabaseClient
       .from("favoris")
       .select("stylo_id")
@@ -20,7 +26,7 @@ async function chargerAnnonces() {
 
   const { data: annonces, error } = await supabaseClient
     .from("annonces")
-    .select("id, stylo_id, prix, description, vendeur_id, stylos(nom, lieu_ou_entreprise, ville, pays, rarete, description, photos(storage_path, est_principale)), vendeur:vendeur_id(pseudo)")
+    .select("id, stylo_id, prix, description, vendeur_id, vues, stylos(nom, lieu_ou_entreprise, ville, pays, rarete, description, photos(storage_path, est_principale)), vendeur:vendeur_id(pseudo)")
     .eq("statut", "active")
     .order("created_at", { ascending: false });
 
@@ -37,25 +43,33 @@ async function chargerAnnonces() {
     return;
   }
 
+  // Récupère le nombre de favoris de chaque stylo (visible par tout le monde)
+  const comptes = await Promise.all(toutesLesAnnonces.map(a => compterFavorisStylo(a.stylo_id)));
+  toutesLesAnnonces.forEach((a, i) => { a.nbFavoris = comptes[i]; });
+
   const monId = monIdUtilisateurAnnonces;
 
   function carteAnnonceHtml(annonce) {
     const urlPhoto = annonce.stylos.photos && annonce.stylos.photos.length > 0
-      ? supabaseClient.storage.from("stylos-photos").getPublicUrl(annonce.stylos.photos[0].storage_path).data.publicUrl
+      ? obtenirUrlPhoto(annonce.stylos)
       : null;
     const estFavori = idsFavorisAnnonces.has(annonce.stylo_id);
-    return `
+const estMoi = annonce.vendeur_id === monId;
+    const peutModifier = estMoi || monEstAdmin;    return `
       <div class="carte-stylo carte-cliquable" onclick="ouvrirDetailAnnonce('${annonce.id}')">
         ${urlPhoto
           ? `<img src="${urlPhoto}" alt="${annonce.stylos.nom}" class="photo-carte">`
           : `<div class="photo-carte photo-manquante">Pas de photo</div>`
         }
         <div class="infos-carte">
-          ${monIdUtilisateurAnnonces ? `<button class="bouton-favori" onclick="event.stopPropagation(); toggleFavoriAnnonce('${annonce.stylo_id}')">${estFavori ? '♥' : '♡'}</button>` : ''}
-          <h3><span class="repere-4c"><span></span><span></span><span></span><span></span></span>${annonce.stylos.nom}</h3>
-          <p class="rarete">${annonce.stylos.rarete}</p>
+${monIdUtilisateurAnnonces ? `<button class="bouton-favori-texte ${estFavori ? 'favori-actif' : ''}" onclick="event.stopPropagation(); toggleFavoriAnnonce('${annonce.stylo_id}')">${estFavori ? 'Favori' : '+ Favori'}</button>` : ''}<h3>${annonce.stylos.nom}</h3>
+          ${badgeRareteHtml(annonce.stylos.rarete)}
           <p class="prix">${annonce.prix} €</p>
-          ${annonce.vendeur_id === monId
+          <div class="stats-annonce">
+  <span>${annonce.nbFavoris} favori${annonce.nbFavoris > 1 ? "s" : ""}</span>
+  ${estMoi ? `<span>${annonce.vues} vue${annonce.vues > 1 ? "s" : ""}</span>` : ""}
+</div>
+          ${peutModifier
             ? `<button class="bouton-vendre" onclick="event.stopPropagation(); modifierAnnonce('${annonce.id}', ${annonce.prix})">Modifier le prix</button>`
             : `<button class="bouton-vendre" onclick="event.stopPropagation(); contacterVendeur('${annonce.id}', '${annonce.vendeur_id}')">Contacter le vendeur</button>`
           }
@@ -111,8 +125,6 @@ async function modifierAnnonce(annonceId, prixActuel) {
   window.location.reload();
 }
 
-// ---- Popup de détail d'une annonce, avec mini-profil du vendeur ----
-
 async function ouvrirDetailAnnonce(annonceId) {
   const annonce = toutesLesAnnonces.find(a => a.id === annonceId);
   if (!annonce) return;
@@ -120,14 +132,20 @@ async function ouvrirDetailAnnonce(annonceId) {
   const ancienneModale = document.getElementById("modale-annonce");
   if (ancienneModale) ancienneModale.remove();
 
-  const urlPhoto = annonce.stylos.photos && annonce.stylos.photos.length > 0
-    ? supabaseClient.storage.from("stylos-photos").getPublicUrl(annonce.stylos.photos[0].storage_path).data.publicUrl
-    : null;
+  // On ne compte pas les vues du vendeur sur sa propre annonce
+  if (annonce.vendeur_id !== monIdUtilisateurAnnonces) {
+    await enregistrerVueAnnonce(annonceId);
+    annonce.vues = (annonce.vues || 0) + 1;
+  }
+
+  const urlPhoto = obtenirUrlPhoto(annonce.stylos);
 
   const overlay = document.createElement("div");
   overlay.id = "modale-annonce";
   overlay.className = "modale-fond";
   overlay.addEventListener("click", (e) => { if (e.target === overlay) overlay.remove(); });
+
+  const estMoi = annonce.vendeur_id === monIdUtilisateurAnnonces;
 
   overlay.innerHTML = `
     <div class="modale-annonce-boite">
@@ -140,8 +158,12 @@ async function ouvrirDetailAnnonce(annonceId) {
             ? `<img src="${urlPhoto}" alt="${annonce.stylos.nom}" class="modale-detail-photo">`
             : `<div class="photo-carte photo-manquante modale-detail-photo">Pas de photo</div>`
           }
-          <p class="rarete" style="margin-top:0.8rem;">${annonce.stylos.rarete}</p>
+          <p style="margin-top:0.8rem;">${badgeRareteHtml(annonce.stylos.rarete)}</p>
           <p class="prix">${annonce.prix} €</p>
+          <div class="stats-annonce">
+            <span>${annonce.nbFavoris} favori${annonce.nbFavoris > 1 ? "s" : ""}</span>
+            ${estMoi ? `<span>${annonce.vues} vue${annonce.vues > 1 ? "s" : ""}</span>` : ""}
+          </div>
           <p>${annonce.stylos.lieu_ou_entreprise || ""}${annonce.stylos.ville ? " — " + annonce.stylos.ville : ""}${annonce.stylos.pays ? " (" + annonce.stylos.pays + ")" : ""}</p>
           ${annonce.stylos.description ? `<p>${annonce.stylos.description}</p>` : ""}
           ${annonce.description ? `<p><em>${annonce.description}</em></p>` : ""}

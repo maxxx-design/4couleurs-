@@ -95,8 +95,8 @@ function carteHtml(stylo, compteurVentes) {
       </a>
       <div class="infos-carte">
         ${monIdUtilisateur ? `<button class="bouton-favori" onclick="toggleFavori('${stylo.id}')">${estFavori ? '♥' : '♡'}</button>` : ''}
-        <h3><span class="repere-4c"><span></span><span></span><span></span><span></span></span>${stylo.nom}</h3>
-        <p class="rarete">${stylo.rarete}</p>
+        <h3>${stylo.nom}</h3>
+        ${badgeRareteHtml(stylo.rarete)}
         ${nbEnVente > 0 ? `<a href="fiche-stylo.html?stylo=${stylo.id}" class="badge-vente">${nbEnVente} en vente</a>` : ""}
         <a href="vendre.html?stylo=${stylo.id}" class="bouton-vendre">Vendre ce stylo</a>
       </div>
@@ -184,9 +184,7 @@ async function chargerCatalogue() {
 
   const { data: stylos, error: erreurStylos } = await supabaseClient
     .from("stylos")
-    .select("*, stylo_categories(categories(nom)), stylo_sous_categories(sous_categories(nom)), photos(storage_path, est_principale)")
-    .eq("statut_moderation", "valide")
-    .order("nom", { ascending: true });
+.select("*, stylo_categories(categories(nom)), stylo_sous_categories(sous_categories(nom)), photos(storage_path, est_principale)")    .order("nom", { ascending: true });
 
   if (erreurStylos) {
     container.innerHTML = "<p>Erreur de chargement : " + erreurStylos.message + "</p>";

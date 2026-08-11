@@ -27,7 +27,6 @@ function correspondApproximativement(texte, terme) {
   return motsDuTexte.some(mot => distanceLevenshtein(mot, terme) <= seuilTolerance);
 }
 
-// URL publique de la photo principale d'un stylo (ou la première si aucune n'est marquée principale)
 function obtenirUrlPhoto(stylo) {
   if (!stylo || !stylo.photos || stylo.photos.length === 0) return null;
   const principale = stylo.photos.find(p => p.est_principale) || stylo.photos[0];
@@ -40,4 +39,34 @@ async function obtenirIdCompteSysteme() {
   const { data } = await supabaseClient.from("profils").select("id").eq("est_systeme", true).maybeSingle();
   _idCompteSystemeCache = data ? data.id : null;
   return _idCompteSystemeCache;
+}
+
+async function enregistrerVueAnnonce(annonceId) {
+  await supabaseClient.rpc('incrementer_vue_annonce', { id_annonce: annonceId });
+}
+
+async function compterFavorisStylo(styloId) {
+  const { data } = await supabaseClient.rpc('compter_favoris_stylo', { id_stylo: styloId });
+  return data || 0;
+}
+
+// ---- Rareté : libellés + couleurs reprises du stylo 4 couleurs ----
+const LABELS_RARETE = {
+  commun: "Commun",
+  peu_commun: "Peu commun",
+  rare: "Rare",
+  tres_rare: "Très rare",
+  exceptionnel: "Exceptionnel"
+};
+const COULEURS_RARETE = {
+  commun: { fond: "transparent", texte: "var(--encre)", bordure: "var(--ligne-forte)" },
+  peu_commun: { fond: "#EDEAE3", texte: "var(--encre)", bordure: "var(--ligne-forte)" },
+  rare: { fond: "var(--bic-vert)", texte: "#ffffff", bordure: "var(--bic-vert)" },
+  tres_rare: { fond: "var(--bic-bleu)", texte: "#ffffff", bordure: "var(--bic-bleu)" },
+  exceptionnel: { fond: "var(--bic-rouge)", texte: "#ffffff", bordure: "var(--bic-rouge)" }
+};
+function badgeRareteHtml(rarete) {
+  const c = COULEURS_RARETE[rarete] || COULEURS_RARETE.commun;
+  const label = LABELS_RARETE[rarete] || rarete;
+  return `<span class="badge-rarete" style="background:${c.fond}; color:${c.texte}; border-color:${c.bordure};">${label}</span>`;
 }

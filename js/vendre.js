@@ -50,8 +50,7 @@
   function rendreZonePossession() {
     zonePossession.innerHTML = `
       <label style="display:flex; align-items:center; gap:0.5rem; font-weight:normal; text-transform:none;">
-        <input type="checkbox" id="case-possession" ${jePossede ? "checked" : ""}>
-        Je possède ce stylo
+<input type="checkbox" id="case-possession" class="case-possession-stylisee" ${jePossede ? "checked" : ""}>        Je possède ce stylo
       </label>
     `;
     document.getElementById("case-possession").addEventListener("change", async (e) => {

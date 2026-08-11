@@ -8,15 +8,16 @@ function afficherPageCarrousel() {
     container.innerHTML = "<p>Pas encore de stylos à découvrir.</p>";
     return;
   }
-  const debut = pageCarrouselActuelle * 3;
-  const stylosAffiches = stylosCarrousel.slice(debut, debut + 3);
+  const debut = pageCarrouselActuelle * 5;
+  const stylosAffiches = stylosCarrousel.slice(debut, debut + 5);
   container.innerHTML = `<div class="grille-stylos">` + stylosAffiches.map(stylo => {
     const urlPhoto = obtenirUrlPhoto(stylo);
     return `
-<a href="fiche-stylo.html?stylo=${stylo.id}" class="lien-photo-carte" style="text-decoration: none; color: inherit;">        <div class="carte-stylo">
+      <a href="fiche-stylo.html?stylo=${stylo.id}" class="lien-photo-carte" style="text-decoration: none; color: inherit;">
+        <div class="carte-stylo">
           ${urlPhoto ? `<img src="${urlPhoto}" alt="${stylo.nom}" class="photo-carte">` : `<div class="photo-carte photo-manquante">Pas de photo</div>`}
           <div class="infos-carte">
-            <h3><span class="repere-4c"><span></span><span></span><span></span><span></span></span>${stylo.nom}</h3>
+            <h3>${stylo.nom}</h3>
           </div>
         </div>
       </a>
@@ -29,13 +30,13 @@ async function initialiserCarrousel() {
     .from("stylos")
     .select("id, nom, photos(storage_path, est_principale)")
     .eq("statut_moderation", "valide")
-    .limit(12);
+    .limit(15);
 
   if (error || !stylos) return;
   stylosCarrousel = stylos;
   afficherPageCarrousel();
 
-  const nombreDePages = Math.ceil(stylosCarrousel.length / 3);
+  const nombreDePages = Math.ceil(stylosCarrousel.length / 5);
   if (nombreDePages <= 1) return;
   intervalCarrousel = setInterval(() => {
     pageCarrouselActuelle = (pageCarrouselActuelle + 1) % nombreDePages;

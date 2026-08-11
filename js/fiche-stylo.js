@@ -27,8 +27,8 @@
     <div class="carte-stylo" style="max-width:400px;">
       ${urlPhotoPrincipale ? `<img src="${urlPhotoPrincipale}" alt="${stylo.nom}" class="photo-carte" id="photo-fiche-principale">` : `<div class="photo-carte photo-manquante">Pas de photo</div>`}
       <div class="infos-carte">
-        <h3><span class="repere-4c"><span></span><span></span><span></span><span></span></span>${stylo.nom}</h3>
-        <p class="rarete">${stylo.rarete}</p>
+        <h3>${stylo.nom}</h3>
+        ${badgeRareteHtml(stylo.rarete)}
         <p>${stylo.lieu_ou_entreprise || ""}${stylo.ville ? " — " + stylo.ville : ""}${stylo.pays ? " (" + stylo.pays + ")" : ""}</p>
         ${stylo.description ? `<p>${stylo.description}</p>` : ""}
         ${photosSecondaires.length > 0 ? `

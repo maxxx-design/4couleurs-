@@ -100,8 +100,7 @@ async function ouvrirConversation(conversationId) {
   await chargerListeConversations(); // pour surligner l'item actif
 
   const zone = document.getElementById("zone-conversation");
-  zone.innerHTML = `<p>Chargement...</p>`;
-
+zone.innerHTML = htmlChargement();
   const { data: conversation, error } = await supabaseClient
     .from("conversations")
     .select(`

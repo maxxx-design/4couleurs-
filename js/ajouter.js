@@ -1,23 +1,24 @@
-// ajouter.js — popup "Ajouter un stylo" : sélecteurs visuels, photo principale + secondaires, retour clair
+// ajouter.js — popup "Ajouter un stylo" : formulaire condensé (Nom/État/Rareté),
+// puis Touristique OU Publicitaire, puis "Faire une annonce" en option
 
-const SOUS_CATEGORIES_AJOUT = {
-  touristique: ["Ville", "Monument", "Institution", "Région/Département/Pays"],
-  publicitaire: ["Entreprise", "Association", "Institution", "Sport", "Événement"]
-};
+const RARETES_AJOUT = ["commun", "peu_commun", "rare", "tres_rare", "exceptionnel"];
 
-const RARETES_AJOUT = [
-  { valeur: "commun", label: "Commun" },
-  { valeur: "peu_commun", label: "Peu commun" },
-  { valeur: "rare", label: "Rare" },
-  { valeur: "tres_rare", label: "Très rare" },
-  { valeur: "exceptionnel", label: "Exceptionnel" }
+const REGIONS_FRANCE = [
+  "Auvergne-Rhône-Alpes", "Bourgogne-Franche-Comté", "Bretagne", "Centre-Val de Loire",
+  "Corse", "Grand Est", "Hauts-de-France", "Île-de-France", "Normandie",
+  "Nouvelle-Aquitaine", "Occitanie", "Pays de la Loire", "Provence-Alpes-Côte d'Azur",
+  "Guadeloupe", "Martinique", "Guyane", "La Réunion", "Mayotte"
 ];
 
-let categoriesChoisiesAjout = new Set();
+let typeChoisiAjout = null; // "touristique" | "publicitaire" | null
 let rareteChoisieAjout = "commun";
-let sousCategorieChoisieAjout = "";
+let annonceActiveAjout = false;
 let fichierPrincipalAjout = null;
 let fichiersSecondairesAjout = [];
+
+function estFrance(valeur) {
+  return (valeur || "").trim().toLowerCase() === "france";
+}
 
 async function ouvrirModaleAjout() {
   const session = await verifierConnexion();
@@ -26,9 +27,9 @@ async function ouvrirModaleAjout() {
     return;
   }
 
-  categoriesChoisiesAjout = new Set();
+  typeChoisiAjout = null;
   rareteChoisieAjout = "commun";
-  sousCategorieChoisieAjout = "";
+  annonceActiveAjout = false;
   fichierPrincipalAjout = null;
   fichiersSecondairesAjout = [];
 
@@ -46,65 +47,90 @@ async function ouvrirModaleAjout() {
       <button class="modale-fermer" onclick="document.getElementById('modale-ajout').remove()">×</button>
       <h2>Ajouter un stylo</h2>
       <form id="form-ajout-popup" class="formulaire" style="margin: 0 1.5rem 1.5rem; max-width:none;">
-        <label>Nom du stylo
+        <label>Nom
           <input type="text" id="ajout-nom" required>
         </label>
-        <label>Lieu ou entreprise représenté
-          <input type="text" id="ajout-lieu" required>
-        </label>
-        <div style="display:flex; gap:0.8rem;">
-          <label style="flex:1;">Ville
-            <input type="text" id="ajout-ville">
-          </label>
-          <label style="flex:1;">Pays
-            <input type="text" id="ajout-pays" value="France">
-          </label>
-        </div>
-        <label>Région
-          <input type="text" id="ajout-region">
-        </label>
-        <label>Coordonnées GPS (format : lat, lng)
-          <input type="text" id="ajout-coordonnees" placeholder="43.206261, 2.364185">
-        </label>
 
-        <label>Catégorie(s)</label>
-        <div class="selecteur-categories" id="selecteur-categories">
-          <div class="option-categorie" data-valeur="touristique">Touristique</div>
-          <div class="option-categorie" data-valeur="publicitaire">Publicitaire</div>
-        </div>
-
-        <div id="zone-sous-categories" style="display:none;">
-          <label>Sous-catégorie</label>
-          <div class="selecteur-chips" id="selecteur-chips"></div>
-        </div>
+        <label>État du stylo
+          <select id="ajout-etat">
+            <option value="Neuf">Neuf</option>
+            <option value="Très bon état">Très bon état</option>
+            <option value="Bon état" selected>Bon état</option>
+            <option value="État moyen">État moyen</option>
+            <option value="Abîmé">Abîmé</option>
+          </select>
+        </label>
 
         <label>Rareté</label>
         <div class="selecteur-raretes" id="selecteur-raretes">
-          ${RARETES_AJOUT.map(r => `<div class="option-rarete ${r.valeur === 'commun' ? 'selectionnee' : ''}" data-valeur="${r.valeur}">${r.label}</div>`).join("")}
+          ${RARETES_AJOUT.map(r => `<div class="option-rarete ${r === 'commun' ? 'selectionnee' : ''}" data-valeur="${r}">${LABELS_RARETE[r]}</div>`).join("")}
         </div>
-
-        <div style="display:flex; gap:0.8rem;">
-          <label style="flex:1;">Prix d'achat (€)
-            <input type="number" step="0.01" id="ajout-prix-achat">
-          </label>
-          <label style="flex:1;">Valeur estimée (€)
-            <input type="number" step="0.01" id="ajout-valeur-estimee">
-          </label>
-        </div>
-
-        <label>Description
-          <textarea id="ajout-description"></textarea>
-        </label>
 
         <label>Photo principale
           <input type="file" id="ajout-photo-principale" accept="image/*">
         </label>
         <div class="apercu-photos" id="apercu-principale"></div>
 
-        <label>Photos secondaires (optionnel, plusieurs possibles)
+        <label>Photos secondaires (nécessaire pour faire une annonce)
           <input type="file" id="ajout-photos-secondaires" accept="image/*" multiple>
         </label>
         <div class="apercu-photos" id="apercu-secondaires"></div>
+
+        <label>Type de stylo</label>
+        <div class="selecteur-type" id="selecteur-type">
+          <div class="option-type" data-valeur="publicitaire">Publicitaire</div>
+          <div class="option-type" data-valeur="touristique">Touristique</div>
+        </div>
+
+        <div id="zone-publicitaire" class="bloc-conditionnel" style="display:none;">
+          <label>Entreprise représentée
+            <input type="text" id="ajout-entreprise">
+          </label>
+          <label>Type d'activité
+            <input type="text" id="ajout-type-activite" placeholder="Ex : Automobile, Restauration, Banque...">
+          </label>
+        </div>
+
+        <div id="zone-touristique" class="bloc-conditionnel" style="display:none;">
+          <label>Lieu représenté
+            <input type="text" id="ajout-lieu-touristique">
+          </label>
+          <label>Ville
+            <input type="text" id="ajout-ville">
+          </label>
+          <p class="aide-champ">Si tu renseignes la ville, le pays, la région et les coordonnées GPS deviennent obligatoires.</p>
+          <label>Pays
+            <input type="text" id="ajout-pays" value="France" list="liste-pays">
+            <datalist id="liste-pays"></datalist>
+          </label>
+          <div class="zone-region-toggle">
+            <label id="zone-region-france">Région
+              <select id="ajout-region-select">
+                <option value="">Choisir une région</option>
+                ${REGIONS_FRANCE.map(r => `<option value="${r}">${r}</option>`).join("")}
+              </select>
+            </label>
+            <label id="zone-region-etrangere" style="display:none;">Région
+              <input type="text" value="Région étrangère" readonly>
+            </label>
+          </div>
+          <label>Coordonnées GPS (format : lat, lng)
+            <input type="text" id="ajout-coordonnees" placeholder="43.206261, 2.364185">
+          </label>
+        </div>
+
+        <button type="button" class="bouton-toggle-annonce" id="bouton-toggle-annonce">+ Faire une annonce</button>
+        <div id="zone-annonce" class="bloc-conditionnel" style="display:none;">
+          <label>Prix d'achat (€)
+            <input type="number" step="0.01" id="ajout-prix-achat">
+          </label>
+          <label>Prix de vente (€)
+            <input type="number" step="0.01" id="ajout-prix-vente">
+          </label>
+          <label>Description
+            <textarea id="ajout-description-annonce"></textarea>
+          </label>
+        </div>
 
         <button type="submit">Envoyer</button>
         <p id="ajout-message"></p>
@@ -114,19 +140,7 @@ async function ouvrirModaleAjout() {
   `;
   document.body.appendChild(overlay);
 
-  overlay.querySelectorAll(".option-categorie").forEach(el => {
-    el.addEventListener("click", () => {
-      const valeur = el.dataset.valeur;
-      if (categoriesChoisiesAjout.has(valeur)) {
-        categoriesChoisiesAjout.delete(valeur);
-        el.classList.remove("selectionnee");
-      } else {
-        categoriesChoisiesAjout.add(valeur);
-        el.classList.add("selectionnee");
-      }
-      rafraichirSousCategoriesAjout(overlay);
-    });
-  });
+  await chargerListePaysAjout();
 
   overlay.querySelectorAll(".option-rarete").forEach(el => {
     el.addEventListener("click", () => {
@@ -136,62 +150,97 @@ async function ouvrirModaleAjout() {
     });
   });
 
+  overlay.querySelectorAll(".option-type").forEach(el => {
+    el.addEventListener("click", () => {
+      const valeur = el.dataset.valeur;
+      typeChoisiAjout = (typeChoisiAjout === valeur) ? null : valeur;
+      overlay.querySelectorAll(".option-type").forEach(o => o.classList.remove("selectionnee"));
+      if (typeChoisiAjout) el.classList.add("selectionnee");
+      document.getElementById("zone-publicitaire").style.display = typeChoisiAjout === "publicitaire" ? "flex" : "none";
+      document.getElementById("zone-touristique").style.display = typeChoisiAjout === "touristique" ? "flex" : "none";
+    });
+  });
+
+  document.getElementById("ajout-pays").addEventListener("input", toggleZoneRegion);
+
+  document.getElementById("bouton-toggle-annonce").addEventListener("click", (e) => {
+    annonceActiveAjout = !annonceActiveAjout;
+    e.target.classList.toggle("actif", annonceActiveAjout);
+    e.target.textContent = annonceActiveAjout ? "− Retirer l'annonce" : "+ Faire une annonce";
+    document.getElementById("zone-annonce").style.display = annonceActiveAjout ? "flex" : "none";
+  });
+
   document.getElementById("ajout-photo-principale").addEventListener("change", (e) => {
     fichierPrincipalAjout = e.target.files[0] || null;
-    const apercu = document.getElementById("apercu-principale");
-    apercu.innerHTML = fichierPrincipalAjout ? `<img src="${URL.createObjectURL(fichierPrincipalAjout)}" class="apercu-photo">` : "";
+    document.getElementById("apercu-principale").innerHTML = fichierPrincipalAjout
+      ? `<img src="${URL.createObjectURL(fichierPrincipalAjout)}" class="apercu-photo">` : "";
   });
 
   document.getElementById("ajout-photos-secondaires").addEventListener("change", (e) => {
     fichiersSecondairesAjout = Array.from(e.target.files);
-    const apercu = document.getElementById("apercu-secondaires");
-    apercu.innerHTML = fichiersSecondairesAjout.map(f => `<img src="${URL.createObjectURL(f)}" class="apercu-photo">`).join("");
+    document.getElementById("apercu-secondaires").innerHTML = fichiersSecondairesAjout
+      .map(f => `<img src="${URL.createObjectURL(f)}" class="apercu-photo">`).join("");
   });
 
   document.getElementById("form-ajout-popup").addEventListener("submit", (e) => envoyerFormulaireAjout(e, session));
 }
 
-function rafraichirSousCategoriesAjout(overlay) {
-  const zone = overlay.querySelector("#zone-sous-categories");
-  const chips = overlay.querySelector("#selecteur-chips");
-  const options = new Set();
-  categoriesChoisiesAjout.forEach(cat => (SOUS_CATEGORIES_AJOUT[cat] || []).forEach(s => options.add(s)));
+async function chargerListePaysAjout() {
+  const { data } = await supabaseClient.from("pays_references").select("nom").order("nom");
+  const datalist = document.getElementById("liste-pays");
+  if (datalist) datalist.innerHTML = (data || []).map(p => `<option value="${p.nom}">`).join("");
+}
 
-  if (options.size === 0) {
-    zone.style.display = "none";
-    sousCategorieChoisieAjout = "";
-    return;
-  }
-
-  zone.style.display = "block";
-  chips.innerHTML = Array.from(options).map(nom => `<div class="chip-sous-categorie" data-valeur="${nom}">${nom}</div>`).join("");
-  chips.querySelectorAll(".chip-sous-categorie").forEach(chip => {
-    chip.addEventListener("click", () => {
-      chips.querySelectorAll(".chip-sous-categorie").forEach(c => c.classList.remove("selectionnee"));
-      chip.classList.add("selectionnee");
-      sousCategorieChoisieAjout = chip.dataset.valeur;
-    });
-  });
+function toggleZoneRegion() {
+  const paysValeur = document.getElementById("ajout-pays").value;
+  document.getElementById("zone-region-france").style.display = estFrance(paysValeur) ? "block" : "none";
+  document.getElementById("zone-region-etrangere").style.display = estFrance(paysValeur) ? "none" : "block";
 }
 
 async function envoyerFormulaireAjout(e, session) {
   e.preventDefault();
   const message = document.getElementById("ajout-message");
+  const utilisateurId = session.user.id;
+  const nom = document.getElementById("ajout-nom").value;
+
+  if (!typeChoisiAjout) {
+    message.textContent = "Choisis si le stylo est Touristique ou Publicitaire.";
+    message.style.color = "red";
+    return;
+  }
+
+  let lieuOuEntreprise = "";
+  let ville = null, region = null, pays = "France", latitude = null, longitude = null;
+  let typeActivite = null;
+
+  if (typeChoisiAjout === "publicitaire") {
+    lieuOuEntreprise = document.getElementById("ajout-entreprise").value;
+    typeActivite = document.getElementById("ajout-type-activite").value || null;
+  } else {
+    lieuOuEntreprise = document.getElementById("ajout-lieu-touristique").value;
+    ville = document.getElementById("ajout-ville").value.trim() || null;
+    pays = document.getElementById("ajout-pays").value.trim() || "France";
+    const coordonneesTexte = document.getElementById("ajout-coordonnees").value.trim();
+    region = estFrance(pays) ? document.getElementById("ajout-region-select").value : "Région étrangère";
+
+    if (ville) {
+      if (!pays || !coordonneesTexte || (estFrance(pays) && !region)) {
+        message.textContent = "Ville renseignée : le pays, la région et les coordonnées GPS sont obligatoires.";
+        message.style.color = "red";
+        return;
+      }
+    }
+    if (coordonneesTexte.includes(",")) {
+      const parties = coordonneesTexte.split(",");
+      latitude = parseFloat(parties[0].trim());
+      longitude = parseFloat(parties[1].trim());
+      if (isNaN(latitude) || isNaN(longitude)) { latitude = null; longitude = null; }
+    }
+    await supabaseClient.from("pays_references").upsert({ nom: pays }, { onConflict: "nom", ignoreDuplicates: true });
+  }
+
   message.textContent = "Envoi en cours...";
   message.style.color = "black";
-
-  const nom = document.getElementById("ajout-nom").value;
-  const utilisateurId = session.user.id;
-
-  const coordonneesTexte = document.getElementById("ajout-coordonnees").value;
-  let latitude = null;
-  let longitude = null;
-  if (coordonneesTexte.includes(",")) {
-    const parties = coordonneesTexte.split(",");
-    latitude = parseFloat(parties[0].trim());
-    longitude = parseFloat(parties[1].trim());
-    if (isNaN(latitude) || isNaN(longitude)) { latitude = null; longitude = null; }
-  }
 
   const { data: stylosExistants } = await supabaseClient
     .from("stylos")
@@ -205,20 +254,23 @@ async function envoyerFormulaireAjout(e, session) {
   }
   const statutInitial = raisonModeration ? "en_attente" : "valide";
 
+  const prixVente = document.getElementById("ajout-prix-vente").value || null;
+
   const { data: stylo, error: erreurStylo } = await supabaseClient
     .from("stylos")
     .insert({
       nom: nom,
-      lieu_ou_entreprise: document.getElementById("ajout-lieu").value,
-      ville: document.getElementById("ajout-ville").value || null,
-      region: document.getElementById("ajout-region").value || null,
-      pays: document.getElementById("ajout-pays").value || "France",
+      etat: document.getElementById("ajout-etat").value,
+      lieu_ou_entreprise: lieuOuEntreprise,
+      type_activite: typeActivite,
+      ville: ville,
+      region: region,
+      pays: pays,
       latitude: latitude,
       longitude: longitude,
       rarete: rareteChoisieAjout,
       prix_achat: document.getElementById("ajout-prix-achat").value || null,
-      valeur_estimee: document.getElementById("ajout-valeur-estimee").value || null,
-      description: document.getElementById("ajout-description").value || null,
+      valeur_estimee: prixVente,
       cree_par: utilisateurId,
       statut_moderation: statutInitial,
       raison_moderation: raisonModeration
@@ -233,29 +285,13 @@ async function envoyerFormulaireAjout(e, session) {
     return;
   }
 
-  if (categoriesChoisiesAjout.size > 0) {
-    const { data: categories } = await supabaseClient
-      .from("categories")
-      .select("id, nom")
-      .in("nom", Array.from(categoriesChoisiesAjout));
-    if (categories) {
-      const liaisons = categories.map(c => ({ stylo_id: stylo.id, categorie_id: c.id }));
-      await supabaseClient.from("stylo_categories").insert(liaisons);
-    }
-  }
-
-  if (sousCategorieChoisieAjout) {
-    const { data: sousCategorie } = await supabaseClient
-      .from("sous_categories")
-      .select("id")
-      .eq("nom", sousCategorieChoisieAjout)
-      .single();
-    if (sousCategorie) {
-      await supabaseClient.from("stylo_sous_categories").insert({
-        stylo_id: stylo.id,
-        sous_categorie_id: sousCategorie.id
-      });
-    }
+  const { data: categorie } = await supabaseClient
+    .from("categories")
+    .select("id")
+    .eq("nom", typeChoisiAjout)
+    .single();
+  if (categorie) {
+    await supabaseClient.from("stylo_categories").insert({ stylo_id: stylo.id, categorie_id: categorie.id });
   }
 
   const photosAEnvoyer = [];
@@ -265,9 +301,7 @@ async function envoyerFormulaireAjout(e, session) {
   for (let i = 0; i < photosAEnvoyer.length; i++) {
     const { fichier, principale } = photosAEnvoyer[i];
     const cheminFichier = `${stylo.id}/${i}-${fichier.name}`;
-    const { error: erreurUpload } = await supabaseClient.storage
-      .from("stylos-photos")
-      .upload(cheminFichier, fichier);
+    const { error: erreurUpload } = await supabaseClient.storage.from("stylos-photos").upload(cheminFichier, fichier);
     if (!erreurUpload) {
       await supabaseClient.from("photos").insert({
         stylo_id: stylo.id,
@@ -281,10 +315,28 @@ async function envoyerFormulaireAjout(e, session) {
     }
   }
 
-  afficherSuccesAjout(statutInitial, raisonModeration);
+  let annonceCreee = false;
+  let annonceEnAttente = false;
+  if (annonceActiveAjout && prixVente) {
+    const prixNombre = parseFloat(prixVente);
+    const statutAnnonce = prixNombre >= 20 ? "en_attente" : "active";
+    const { error: erreurAnnonce } = await supabaseClient.from("annonces").insert({
+      stylo_id: stylo.id,
+      vendeur_id: utilisateurId,
+      prix: prixNombre,
+      description: document.getElementById("ajout-description-annonce").value || null,
+      statut: statutAnnonce
+    });
+    if (!erreurAnnonce) {
+      annonceCreee = true;
+      annonceEnAttente = statutAnnonce === "en_attente";
+    }
+  }
+
+  afficherSuccesAjout(statutInitial, raisonModeration, annonceCreee, annonceEnAttente);
 }
 
-function afficherSuccesAjout(statutInitial, raisonModeration) {
+function afficherSuccesAjout(statutInitial, raisonModeration, annonceCreee, annonceEnAttente) {
   document.getElementById("form-ajout-popup").style.display = "none";
   const zoneSucces = document.getElementById("ajout-succes");
   zoneSucces.style.display = "block";
@@ -294,6 +346,7 @@ function afficherSuccesAjout(statutInitial, raisonModeration) {
       <h3>${statutInitial === "valide" ? "Stylo ajouté au catalogue !" : "Stylo envoyé pour validation"}</h3>
       ${raisonModeration ? `<p class="badge-raison">${raisonModeration}</p>` : ""}
       <p style="color:#6B6558;">${statutInitial === "valide" ? "Il apparaît déjà dans le catalogue." : "Il apparaîtra dans le catalogue une fois approuvé par un modérateur."}</p>
+      ${annonceCreee ? `<p style="color:#6B6558;">${annonceEnAttente ? "Ton annonce a été envoyée en modération (prix ≥ 20 €)." : "Ton annonce est déjà active."}</p>` : ""}
       <div style="margin-top:1.2rem; display:flex; gap:0.6rem; justify-content:center;">
         <button class="bouton-vendre" onclick="document.getElementById('modale-ajout').remove(); ouvrirModaleAjout();">Ajouter un autre stylo</button>
         <button class="bouton-refuser" onclick="document.getElementById('modale-ajout').remove(); if (typeof chargerCatalogue === 'function') chargerCatalogue();">Fermer</button>
@@ -302,7 +355,6 @@ function afficherSuccesAjout(statutInitial, raisonModeration) {
   `;
 }
 
-// Branche le lien "Ajouter un stylo" du menu sur la popup, sur chaque page où le script est chargé
 const lienAjouterNav = document.getElementById("lien-ajouter");
 if (lienAjouterNav) {
   lienAjouterNav.addEventListener("click", (e) => { e.preventDefault(); ouvrirModaleAjout(); });

@@ -45,7 +45,7 @@
         <h3>${stylo.nom}</h3>
         <p>${stylo.lieu_ou_entreprise}</p>
         <p>${stylo.ville || ""} ${stylo.pays || ""}</p>
-        <p class="rarete">${stylo.rarete}</p>
+        ${badgeRareteHtml(stylo.rarete)}
         <p class="badge-raison">${stylo.raison_moderation || "Nouvelle fiche à vérifier"}</p>
         <button class="bouton-vendre" onclick="validerStylo('${stylo.id}', '${stylo.cree_par}', '${stylo.nom.replace(/'/g, "\\'")}')">Valider</button>
         <button class="bouton-refuser" onclick="refuserStylo('${stylo.id}', '${stylo.cree_par}', '${stylo.nom.replace(/'/g, "\\'")}')">Refuser</button>

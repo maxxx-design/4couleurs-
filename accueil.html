@@ -3,18 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BIC 4 Couleurs — Catalogue & Marketplace</title>
+<title>QuadriColor — Catalogue & Marketplace</title>
 <link rel="stylesheet" href="css/style.css">
+<link rel="icon" type="image/svg+xml" href="img/logo-quadricolor.svg">
 </head>
 <body>
 <div class="bandeau-4c"><span></span><span></span><span></span><span></span></div>
 <header>
-  <h1>BIC 4 Couleurs</h1>
-  <nav>
+<h1><img src="img/logo-quadricolor.svg" alt="" class="logo-marque-inline">QuadriColor</h1>  <nav>
     <a href="accueil.html" class="active">Accueil</a>
     <a href="index.html">Catalogue</a>
     <a href="annonces.html">Annonces en vente</a>
-<a href="#" id="lien-ajouter">Ajouter un stylo</a>    <a href="mes-messages.html">Mes messages</a>
+<a href="mes-messages.html">Mes messages</a>
     <a href="#" id="lien-profil" style="display:none;">Mon profil</a>
     <a href="#" id="lien-connexion">Se connecter</a>
   </nav>
@@ -25,14 +25,20 @@
 </div>
 
 <p style="max-width: 500px; color: #6B6558; margin: 1.5rem 0;">
-  Le paiement en ligne sera bientôt disponible. En attendant, contacte le vendeur pour vous mettre d'accord sur les modalités (virement, PayPal, remise en main propre...).
+  QuadriColor met en relation les collectionneurs pour l'échange de stylos BIC 4 Couleurs. Les transactions se règlent directement entre membres.
 </p>
 
 
 
 <h2>Découvrir quelques stylos</h2>
-<div id="carrousel"></div>
-
+<div id="carrousel">
+  <div class="zone-chargement">
+    <div class="chargement-4c"><span></span><span></span><span></span><span></span></div>
+  </div>
+</div>
+<footer class="pied-de-page">
+  <p>Site non affilié à la marque BIC.</p>
+</footer>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/config.js"></script>
 <script src="js/supabaseClient.js"></script>
@@ -40,11 +46,6 @@
 <script src="js/auth.js"></script>
 <script src="js/ajouter.js"></script>
 <script src="js/carousel.js"></script>
-<script>
-  (async function () {
-    const session = await verifierConnexion();
-    
-  })();
-</script>
+
 </body>
 </html>

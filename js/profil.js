@@ -59,6 +59,71 @@
     });
   }
 
+  // ---- Stylos que cette personne vend actuellement (public) ----
+  const containerVentes = document.getElementById("ventes-profil");
+  const { data: enVente } = await supabaseClient
+    .from("annonces")
+    .select("id, prix, stylo_id, stylos(nom, rarete, photos(storage_path, est_principale))")
+    .eq("vendeur_id", profilId)
+    .eq("statut", "active");
+
+  if (enVente && enVente.length > 0) {
+    containerVentes.innerHTML = `
+      <h2>En vente (${enVente.length})</h2>
+      <div class="grille-stylos">
+        ${enVente.map(a => {
+          const urlPhoto = obtenirUrlPhoto(a.stylos);
+          return `
+            <a href="fiche-stylo.html?stylo=${a.stylo_id}" class="lien-photo-carte" style="text-decoration:none; color:inherit;">
+              <div class="carte-stylo">
+                ${urlPhoto ? `<img src="${urlPhoto}" alt="${a.stylos.nom}" class="photo-carte">` : `<div class="photo-carte photo-manquante">Pas de photo</div>`}
+                <div class="infos-carte">
+                  <h3>${a.stylos.nom}</h3>
+                  ${badgeRareteHtml(a.stylos.rarete)}
+                  <p class="prix">${a.prix} €</p>
+                </div>
+              </div>
+            </a>
+          `;
+        }).join("")}
+      </div>
+    `;
+  }
+
+  // ---- Favoris (visibles uniquement si c'est ton propre profil) ----
+  const containerFavoris = document.getElementById("favoris-profil");
+  const session = await verifierConnexion();
+  if (session && session.user.id === profilId) {
+    const { data: mesFavoris } = await supabaseClient
+      .from("favoris")
+      .select("stylos(id, nom, rarete, photos(storage_path, est_principale))")
+      .eq("utilisateur_id", profilId);
+
+    if (mesFavoris && mesFavoris.length > 0) {
+      containerFavoris.innerHTML = `
+        <h2>Mes favoris (${mesFavoris.length})</h2>
+        <div class="grille-stylos">
+          ${mesFavoris.map(f => {
+            const stylo = f.stylos;
+            const urlPhoto = obtenirUrlPhoto(stylo);
+            return `
+              <a href="fiche-stylo.html?stylo=${stylo.id}" class="lien-photo-carte" style="text-decoration:none; color:inherit;">
+                <div class="carte-stylo">
+                  ${urlPhoto ? `<img src="${urlPhoto}" alt="${stylo.nom}" class="photo-carte">` : `<div class="photo-carte photo-manquante">Pas de photo</div>`}
+                  <div class="infos-carte">
+                    <h3>${stylo.nom}</h3>
+                    ${badgeRareteHtml(stylo.rarete)}
+                  </div>
+                </div>
+              </a>
+            `;
+          }).join("")}
+        </div>
+      `;
+    }
+  }
+
+  // ---- Collection possédée (inchangé) ----
   const containerCollection = document.getElementById("collection-profil");
   const { data: possessions } = await supabaseClient
     .from("possessions")
@@ -78,7 +143,7 @@
                 ${urlPhoto ? `<img src="${urlPhoto}" alt="${stylo.nom}" class="photo-carte">` : `<div class="photo-carte photo-manquante">Pas de photo</div>`}
                 <div class="infos-carte">
                   <h3>${stylo.nom}</h3>
-                  <p class="rarete">${stylo.rarete}</p>
+                  ${badgeRareteHtml(stylo.rarete)}
                 </div>
               </div>
             </a>
