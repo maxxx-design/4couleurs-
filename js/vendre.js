@@ -14,8 +14,7 @@
 
   const { data: stylo, error: erreurStylo } = await supabaseClient
     .from("stylos")
-    .select("id, nom, lieu_ou_entreprise, rarete")
-    .eq("id", styloId)
+.select("id, nom, lieu_ou_entreprise, entreprise_representee, rarete")    .eq("id", styloId)
     .single();
 
   if (erreurStylo || !stylo) {
@@ -26,7 +25,7 @@
   infoStylo.innerHTML = `
     <div class="carte-stylo">
       <h3>${stylo.nom}</h3>
-      <p>${stylo.lieu_ou_entreprise}</p>
+<p>${texteLieuEntreprise(stylo)}</p>
       <p class="rarete">${stylo.rarete}</p>
     </div>
   `;

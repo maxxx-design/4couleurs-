@@ -70,3 +70,81 @@ function badgeRareteHtml(rarete) {
   const label = LABELS_RARETE[rarete] || rarete;
   return `<span class="badge-rarete" style="background:${c.fond}; color:${c.texte}; border-color:${c.bordure};">${label}</span>`;
 }
+// Supprime un stylo et tout ce qui lui est lié (photos, catégories, favoris, possessions, annonces)
+async function supprimerStyloDefinitivement(styloId) {
+  const { data: fichiers } = await supabaseClient.storage.from("stylos-photos").list(styloId);
+  if (fichiers && fichiers.length > 0) {
+    const chemins = fichiers.map(f => `${styloId}/${f.name}`);
+    await supabaseClient.storage.from("stylos-photos").remove(chemins);
+  }
+  await supabaseClient.from("photos").delete().eq("stylo_id", styloId);
+  await supabaseClient.from("stylo_categories").delete().eq("stylo_id", styloId);
+  await supabaseClient.from("stylo_sous_categories").delete().eq("stylo_id", styloId);
+  await supabaseClient.from("favoris").delete().eq("stylo_id", styloId);
+  await supabaseClient.from("possessions").delete().eq("stylo_id", styloId);
+  await supabaseClient.from("annonces").delete().eq("stylo_id", styloId);
+  const { error } = await supabaseClient.from("stylos").delete().eq("id", styloId);
+  return error;
+}
+// Envoie un message depuis le compte système "QuadriColor" — utilisé par la modération et par l'édition de stylos
+async function envoyerMessageSysteme(utilisateurId, message, options = {}) {
+  if (!utilisateurId) return;
+  const idSysteme = await obtenirIdCompteSysteme();
+  if (!idSysteme || idSysteme === utilisateurId) return;
+
+  let requete = supabaseClient
+    .from("conversations")
+    .select("id")
+    .eq("type", "systeme")
+    .eq("participant_1", idSysteme)
+    .eq("participant_2", utilisateurId);
+  requete = options.annonceId ? requete.eq("annonce_id", options.annonceId) : requete.is("annonce_id", null);
+  requete = options.styloId ? requete.eq("stylo_id", options.styloId) : requete.is("stylo_id", null);
+
+  const { data: existantes } = await requete;
+  let conversationId;
+
+  if (existantes && existantes.length > 0) {
+    conversationId = existantes[0].id;
+  } else {
+    const { data: nouvelle, error } = await supabaseClient.from("conversations").insert({
+      type: "systeme",
+      participant_1: idSysteme,
+      participant_2: utilisateurId,
+      annonce_id: options.annonceId || null,
+      stylo_id: options.styloId || null
+    }).select().single();
+    if (error) { console.error(error); return; }
+    conversationId = nouvelle.id;
+  }
+
+  await supabaseClient.from("messages").insert({
+    conversation_id: conversationId,
+    expediteur_id: idSysteme,
+    contenu: message
+  });
+}
+
+// Supprime un stylo et tout ce qui lui est lié (photos, catégories, favoris, possessions, annonces)
+async function supprimerStyloDefinitivement(styloId) {
+  const { data: fichiers } = await supabaseClient.storage.from("stylos-photos").list(styloId);
+  if (fichiers && fichiers.length > 0) {
+    const chemins = fichiers.map(f => `${styloId}/${f.name}`);
+    await supabaseClient.storage.from("stylos-photos").remove(chemins);
+  }
+  await supabaseClient.from("photos").delete().eq("stylo_id", styloId);
+  await supabaseClient.from("stylo_categories").delete().eq("stylo_id", styloId);
+  await supabaseClient.from("stylo_sous_categories").delete().eq("stylo_id", styloId);
+  await supabaseClient.from("favoris").delete().eq("stylo_id", styloId);
+  await supabaseClient.from("possessions").delete().eq("stylo_id", styloId);
+  await supabaseClient.from("annonces").delete().eq("stylo_id", styloId);
+  const { error } = await supabaseClient.from("stylos").delete().eq("id", styloId);
+  return error;
+}
+// Combine lieu touristique et entreprise publicitaire pour l'affichage (un stylo peut avoir les deux)
+function texteLieuEntreprise(stylo) {
+  const parties = [];
+  if (stylo.lieu_ou_entreprise) parties.push(stylo.lieu_ou_entreprise);
+  if (stylo.entreprise_representee) parties.push(stylo.entreprise_representee);
+  return parties.join(" — ");
+}

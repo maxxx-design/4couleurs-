@@ -11,14 +11,22 @@
 
   const { data: stylo, error: erreurStylo } = await supabaseClient
     .from("stylos")
-    .select("id, nom, lieu_ou_entreprise, ville, pays, rarete, description, photos(storage_path, est_principale)")
-    .eq("id", styloId)
+.select("id, nom, lieu_ou_entreprise, entreprise_representee, ville, pays, rarete, description, cree_par, photos(storage_path, est_principale)")    .eq("id", styloId)
     .single();
 
   if (erreurStylo || !stylo) {
     infoStylo.innerHTML = "<p>Stylo introuvable.</p>";
     return;
   }
+
+  const session = await verifierConnexion();
+  const monId = session ? session.user.id : null;
+  let estAdmin = false;
+  if (session) {
+    const { data: profilConnecte } = await supabaseClient.from("profils").select("est_admin").eq("id", monId).maybeSingle();
+    estAdmin = profilConnecte ? profilConnecte.est_admin : false;
+  }
+  const peutModifier = monId && (monId === stylo.cree_par || estAdmin);
 
   const urlPhotoPrincipale = obtenirUrlPhoto(stylo);
   const photosSecondaires = (stylo.photos || []).filter(p => !p.est_principale);
@@ -29,8 +37,7 @@
       <div class="infos-carte">
         <h3>${stylo.nom}</h3>
         ${badgeRareteHtml(stylo.rarete)}
-        <p>${stylo.lieu_ou_entreprise || ""}${stylo.ville ? " — " + stylo.ville : ""}${stylo.pays ? " (" + stylo.pays + ")" : ""}</p>
-        ${stylo.description ? `<p>${stylo.description}</p>` : ""}
+<p>${texteLieuEntreprise(stylo)}${stylo.ville ? " — " + stylo.ville : ""}${stylo.pays ? " (" + stylo.pays + ")" : ""}</p>        ${stylo.description ? `<p>${stylo.description}</p>` : ""}
         ${photosSecondaires.length > 0 ? `
           <div class="galerie-secondaire">
             ${photosSecondaires.map(p => {
@@ -40,12 +47,10 @@
           </div>
         ` : ""}
         <a href="vendre.html?stylo=${stylo.id}" class="bouton-vendre">Vendre ce stylo aussi</a>
+        ${peutModifier ? `<button class="bouton-vendre" onclick="ouvrirEditionStylo('${stylo.id}')">Modifier</button>` : ""}
       </div>
     </div>
   `;
-
-  const session = await verifierConnexion();
-  const monId = session ? session.user.id : null;
 
   const { data: annonces, error: erreurAnnonces } = await supabaseClient
     .from("annonces")

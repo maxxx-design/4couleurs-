@@ -29,16 +29,8 @@
 <button onclick="ouvrirModaleAjout()" class="bouton-vendre" style="display:inline-block; margin-bottom: 1rem;">Ajouter un stylo</button>
 <div class="filtres">
   <input type="text" id="recherche" placeholder="Rechercher un stylo, une ville, une entreprise...">
-  <select id="filtre-categorie">
-    <option value="">Trier : tout le catalogue</option>
-    <option value="touristique">Trier : Touristique</option>
-    <option value="publicitaire">Trier : Publicitaire</option>
-  </select>
-  <select id="filtre-sous-categorie" style="display:none;">
-    <option value="">Toutes sous-catégories</option>
-  </select>
   <select id="filtre-rarete">
-  <option value="">Raretés</option>
+    <option value="">Raretés</option>
     <option value="commun">Commun</option>
     <option value="peu_commun">Peu commun</option>
     <option value="rare">Rare</option>
@@ -46,8 +38,8 @@
     <option value="exceptionnel">Exceptionnel</option>
   </select>
   <select id="filtre-pays">
-  <option value="">Pays</option>
-</select>
+    <option value="">Pays</option>
+  </select>
 </div>
 
 <div id="carte" style="height: 400px; margin-bottom: 1.5rem; border-radius: 8px;"></div>
@@ -57,11 +49,19 @@
   <div id="liste-favoris" class="grille-stylos"></div>
 </div>
 
-<div id="liste-stylos" class="grille-stylos">
-  <div class="zone-chargement">
-    <div class="chargement-4c"><span></span><span></span><span></span><span></span></div>
-    <span>Chargement du catalogue...</span>
+<div id="section-touristique">
+  <h2>Touristique</h2>
+  <div id="liste-touristique" class="grille-stylos">
+    <div class="zone-chargement">
+      <div class="chargement-4c"><span></span><span></span><span></span><span></span></div>
+      <span>Chargement du catalogue...</span>
+    </div>
   </div>
+</div>
+
+<div id="section-publicitaire">
+  <h2>Publicitaire</h2>
+  <div id="liste-publicitaire" class="grille-stylos"></div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>

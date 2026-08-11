@@ -925,7 +925,8 @@ h1 .logo-marque-inline {
 /* ---- Niveau 3 : fond de popup au motif diagonal ---- */
 .modale-auth-boite, .modale-annonce-boite {
   position: relative;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 .modale-auth-boite::before, .modale-annonce-boite::before {
   content: "";
@@ -966,4 +967,24 @@ h1 .logo-marque-inline {
   background: var(--bic-rouge);
   border-color: var(--bic-rouge);
   color: #ffffff;
+}
+.apercu-photo-conteneur {
+  position: relative;
+  display: inline-block;
+}
+.apercu-photo-supprimer {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--bic-rouge);
+  color: #ffffff;
+  border: none;
+  font-size: 0.7rem;
+  line-height: 18px;
+  text-align: center;
+  cursor: pointer;
+  padding: 0;
 }

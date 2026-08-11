@@ -27,8 +27,7 @@
     const container = document.getElementById("liste-stylos-attente");
     const { data: stylos, error } = await supabaseClient
       .from("stylos")
-      .select("id, nom, lieu_ou_entreprise, ville, pays, rarete, raison_moderation, cree_par")
-      .eq("statut_moderation", "en_attente")
+.select("id, nom, lieu_ou_entreprise, entreprise_representee, ville, pays, rarete, raison_moderation, cree_par")      .eq("statut_moderation", "en_attente")
       .order("created_at", { ascending: true });
 
     if (error) {
@@ -40,11 +39,13 @@
       return;
     }
 
+    // Regroupe les fiches par cause de mise en attente (les raisons similaires se retrouvent côte à côte)
+    stylos.sort((a, b) => (a.raison_moderation || "").localeCompare(b.raison_moderation || ""));
+
     container.innerHTML = stylos.map(stylo => `
       <div class="carte-stylo">
         <h3>${stylo.nom}</h3>
-        <p>${stylo.lieu_ou_entreprise}</p>
-        <p>${stylo.ville || ""} ${stylo.pays || ""}</p>
+<p>${texteLieuEntreprise(stylo)}</p>        <p>${stylo.ville || ""} ${stylo.pays || ""}</p>
         ${badgeRareteHtml(stylo.rarete)}
         <p class="badge-raison">${stylo.raison_moderation || "Nouvelle fiche à vérifier"}</p>
         <button class="bouton-vendre" onclick="validerStylo('${stylo.id}', '${stylo.cree_par}', '${stylo.nom.replace(/'/g, "\\'")}')">Valider</button>

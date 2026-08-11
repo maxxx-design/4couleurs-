@@ -1,15 +1,10 @@
-// catalogue.js — catalogue complet, avec tri Touristique / Publicitaire et carte conditionnelle
-// (fusionne ce qui était avant réparti sur index.html, touristique.html et publicitaire.html)
+// catalogue.js — catalogue séparé automatiquement en sections Touristique / Publicitaire
+// (un stylo qui a les deux catégories apparaît dans les deux sections)
 
 let tousLesStylos = [];
 let compteurVentesGlobal = {};
 let idsFavoris = new Set();
 let monIdUtilisateur = null;
-
-const SOUS_CATEGORIES = {
-  touristique: ["Ville", "Monument", "Institution", "Région/Département/Pays"],
-  publicitaire: ["Entreprise", "Association", "Institution", "Sport", "Événement"]
-};
 
 let carte;
 let groupeMarqueurs;
@@ -29,48 +24,15 @@ function afficherMarqueurs(stylos) {
   groupeMarqueurs.clearLayers();
   stylos.filter(s => s.latitude && s.longitude).forEach(stylo => {
     const marqueur = L.marker([stylo.latitude, stylo.longitude])
-      .bindPopup(`<strong>${stylo.nom}</strong><br>${stylo.lieu_ou_entreprise}`);
+      .bindPopup(`<strong>${stylo.nom}</strong><br>${texteLieuEntreprise(stylo)}`);
     groupeMarqueurs.addLayer(marqueur);
   });
-}
-
-// Affiche ou masque la carte : mise en avant pour le tri Touristique,
-// masquée pour Publicitaire (pas pertinente), visible par défaut pour Tous
-function mettreAJourVisibiliteCarte(categorieChoisie) {
-  const zoneCarte = document.getElementById("carte");
-  if (!zoneCarte) return;
-  if (categorieChoisie === "publicitaire") {
-    zoneCarte.style.display = "none";
-  } else {
-    zoneCarte.style.display = "block";
-    if (carte) setTimeout(() => carte.invalidateSize(), 50);
-  }
-}
-
-function remplirSousCategories(categorieChoisie) {
-  const selectSous = document.getElementById("filtre-sous-categorie");
-  const valeurPrecedente = selectSous.value;
-  selectSous.innerHTML = '<option value="">Toutes sous-catégories</option>';
-  if (categorieChoisie && SOUS_CATEGORIES[categorieChoisie]) {
-    selectSous.style.display = "inline-block";
-    SOUS_CATEGORIES[categorieChoisie].forEach(nom => {
-      const option = document.createElement("option");
-      option.value = nom;
-      option.textContent = nom;
-      selectSous.appendChild(option);
-    });
-    if (SOUS_CATEGORIES[categorieChoisie].includes(valeurPrecedente)) {
-      selectSous.value = valeurPrecedente;
-    }
-  } else {
-    selectSous.style.display = "none";
-  }
 }
 
 function remplirFiltrePays(stylos) {
   const select = document.getElementById("filtre-pays");
   const valeurPrecedente = select.value;
-select.innerHTML = '<option value="">Pays</option>';
+  select.innerHTML = '<option value="">Pays</option>';
   const paysUniques = [...new Set(stylos.map(s => s.pays).filter(Boolean))].sort();
   paysUniques.forEach(pays => {
     const option = document.createElement("option");
@@ -105,13 +67,14 @@ function carteHtml(stylo, compteurVentes) {
 }
 
 function afficherStylos(stylos, compteurVentes) {
-  const container = document.getElementById("liste-stylos");
   const sectionFavoris = document.getElementById("section-favoris");
   const listeFavoris = document.getElementById("liste-favoris");
+  const sectionTouristique = document.getElementById("section-touristique");
+  const listeTouristique = document.getElementById("liste-touristique");
+  const sectionPublicitaire = document.getElementById("section-publicitaire");
+  const listePublicitaire = document.getElementById("liste-publicitaire");
 
   const favorisAffiches = stylos.filter(s => idsFavoris.has(s.id));
-  const resteAffiches = stylos.filter(s => !idsFavoris.has(s.id));
-
   if (favorisAffiches.length > 0) {
     sectionFavoris.style.display = "block";
     listeFavoris.innerHTML = favorisAffiches.map(s => carteHtml(s, compteurVentes)).join("");
@@ -119,11 +82,32 @@ function afficherStylos(stylos, compteurVentes) {
     sectionFavoris.style.display = "none";
   }
 
-  if (resteAffiches.length === 0 && favorisAffiches.length === 0) {
-    container.innerHTML = "<p>Aucun stylo ne correspond à ta recherche.</p>";
-    return;
+  const estTouristique = s => (s.stylo_categories || []).some(sc => sc.categories.nom === "touristique");
+  const estPublicitaire = s => (s.stylo_categories || []).some(sc => sc.categories.nom === "publicitaire");
+
+  const touristiques = stylos.filter(estTouristique);
+  const publicitaires = stylos.filter(estPublicitaire);
+
+  if (touristiques.length > 0) {
+    sectionTouristique.style.display = "block";
+    listeTouristique.innerHTML = touristiques.map(s => carteHtml(s, compteurVentes)).join("");
+  } else {
+    sectionTouristique.style.display = "none";
+    listeTouristique.innerHTML = "";
   }
-  container.innerHTML = resteAffiches.map(s => carteHtml(s, compteurVentes)).join("");
+
+  if (publicitaires.length > 0) {
+    sectionPublicitaire.style.display = "block";
+    listePublicitaire.innerHTML = publicitaires.map(s => carteHtml(s, compteurVentes)).join("");
+  } else {
+    sectionPublicitaire.style.display = "none";
+    listePublicitaire.innerHTML = "";
+  }
+
+  if (touristiques.length === 0 && publicitaires.length === 0 && favorisAffiches.length === 0) {
+    sectionTouristique.style.display = "block";
+    listeTouristique.innerHTML = "<p>Aucun stylo ne correspond à ta recherche.</p>";
+  }
 }
 
 window.toggleFavori = async function (styloId) {
@@ -139,38 +123,28 @@ window.toggleFavori = async function (styloId) {
 
 function appliquerFiltres() {
   const terme = document.getElementById("recherche").value;
-  const categorieChoisie = document.getElementById("filtre-categorie").value;
-  const sousCategorieChoisie = document.getElementById("filtre-sous-categorie").value;
   const rareteChoisie = document.getElementById("filtre-rarete").value;
   const paysChoisi = document.getElementById("filtre-pays").value;
-
-  mettreAJourVisibiliteCarte(categorieChoisie);
 
   const filtres = tousLesStylos.filter(stylo => {
     const correspondTerme = !terme ||
       correspondApproximativement(stylo.nom, terme) ||
       correspondApproximativement(stylo.lieu_ou_entreprise, terme) ||
+      correspondApproximativement(stylo.entreprise_representee, terme) ||
       correspondApproximativement(stylo.ville, terme);
-
-    const categoriesDuStylo = (stylo.stylo_categories || []).map(sc => sc.categories.nom);
-    const correspondCategorie = !categorieChoisie || categoriesDuStylo.includes(categorieChoisie);
-
-    const sousCategoriesDuStylo = (stylo.stylo_sous_categories || []).map(ssc => ssc.sous_categories.nom);
-    const correspondSousCategorie = !sousCategorieChoisie || sousCategoriesDuStylo.includes(sousCategorieChoisie);
 
     const correspondRarete = !rareteChoisie || stylo.rarete === rareteChoisie;
     const correspondPays = !paysChoisi || stylo.pays === paysChoisi;
 
-    return correspondTerme && correspondCategorie && correspondSousCategorie && correspondRarete && correspondPays;
+    return correspondTerme && correspondRarete && correspondPays;
   });
 
   afficherStylos(filtres, compteurVentesGlobal);
-  afficherMarqueurs(filtres);
+  afficherMarqueurs(filtres.filter(s => (s.stylo_categories || []).some(sc => sc.categories.nom === "touristique")));
 }
 
 async function chargerCatalogue() {
   initialiserCarte();
-  const container = document.getElementById("liste-stylos");
   const session = await verifierConnexion();
 
   if (session) {
@@ -184,10 +158,12 @@ async function chargerCatalogue() {
 
   const { data: stylos, error: erreurStylos } = await supabaseClient
     .from("stylos")
-.select("*, stylo_categories(categories(nom)), stylo_sous_categories(sous_categories(nom)), photos(storage_path, est_principale)")    .order("nom", { ascending: true });
+    .select("*, stylo_categories(categories(nom)), stylo_sous_categories(sous_categories(nom)), photos(storage_path, est_principale)")
+    .eq("statut_moderation", "valide")
+    .order("nom", { ascending: true });
 
   if (erreurStylos) {
-    container.innerHTML = "<p>Erreur de chargement : " + erreurStylos.message + "</p>";
+    document.getElementById("liste-touristique").innerHTML = "<p>Erreur de chargement : " + erreurStylos.message + "</p>";
     console.error(erreurStylos);
     return;
   }
@@ -205,20 +181,14 @@ async function chargerCatalogue() {
   }
 
   tousLesStylos = stylos;
-compteurVentesGlobal = compteurVentes;
-remplirFiltrePays(stylos);
-afficherStylos(stylos, compteurVentes);
-afficherMarqueurs(stylos);
-mettreAJourVisibiliteCarte("");
-setTimeout(() => carte.invalidateSize(), 150);
+  compteurVentesGlobal = compteurVentes;
+  remplirFiltrePays(stylos);
+  afficherStylos(stylos, compteurVentes);
+  afficherMarqueurs(stylos.filter(s => (s.stylo_categories || []).some(sc => sc.categories.nom === "touristique")));
+  setTimeout(() => carte.invalidateSize(), 150);
 }
 
 document.getElementById("recherche").addEventListener("input", appliquerFiltres);
-document.getElementById("filtre-categorie").addEventListener("change", (e) => {
-  remplirSousCategories(e.target.value);
-  appliquerFiltres();
-});
-document.getElementById("filtre-sous-categorie").addEventListener("change", appliquerFiltres);
 document.getElementById("filtre-rarete").addEventListener("change", appliquerFiltres);
 document.getElementById("filtre-pays").addEventListener("change", appliquerFiltres);
 

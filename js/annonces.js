@@ -26,7 +26,7 @@ async function chargerAnnonces() {
 
   const { data: annonces, error } = await supabaseClient
     .from("annonces")
-    .select("id, stylo_id, prix, description, vendeur_id, vues, stylos(nom, lieu_ou_entreprise, ville, pays, rarete, description, photos(storage_path, est_principale)), vendeur:vendeur_id(pseudo)")
+    .select("id, stylo_id, prix, description, vendeur_id, vues, stylos(nom, lieu_ou_entreprise, entreprise_representee, ville, pays, rarete, description, cree_par, photos(storage_path, est_principale)), vendeur:vendeur_id(pseudo)")
     .eq("statut", "active")
     .order("created_at", { ascending: false });
 
@@ -54,8 +54,8 @@ async function chargerAnnonces() {
       ? obtenirUrlPhoto(annonce.stylos)
       : null;
     const estFavori = idsFavorisAnnonces.has(annonce.stylo_id);
-const estMoi = annonce.vendeur_id === monId;
-    const peutModifier = estMoi || monEstAdmin;    return `
+    const peutModifier = annonce.stylos.cree_par === monId || monEstAdmin;
+    return `
       <div class="carte-stylo carte-cliquable" onclick="ouvrirDetailAnnonce('${annonce.id}')">
         ${urlPhoto
           ? `<img src="${urlPhoto}" alt="${annonce.stylos.nom}" class="photo-carte">`
@@ -66,11 +66,11 @@ ${monIdUtilisateurAnnonces ? `<button class="bouton-favori-texte ${estFavori ? '
           ${badgeRareteHtml(annonce.stylos.rarete)}
           <p class="prix">${annonce.prix} €</p>
           <div class="stats-annonce">
-  <span>${annonce.nbFavoris} favori${annonce.nbFavoris > 1 ? "s" : ""}</span>
-  ${estMoi ? `<span>${annonce.vues} vue${annonce.vues > 1 ? "s" : ""}</span>` : ""}
-</div>
+            <span>${annonce.nbFavoris} favori${annonce.nbFavoris > 1 ? "s" : ""}</span>
+            ${annonce.vendeur_id === monId ? `<span>${annonce.vues} vue${annonce.vues > 1 ? "s" : ""}</span>` : ""}
+          </div>
           ${peutModifier
-            ? `<button class="bouton-vendre" onclick="event.stopPropagation(); modifierAnnonce('${annonce.id}', ${annonce.prix})">Modifier le prix</button>`
+            ? `<button class="bouton-vendre" onclick="event.stopPropagation(); ouvrirEditionStylo('${annonce.stylo_id}')">Modifier</button>`
             : `<button class="bouton-vendre" onclick="event.stopPropagation(); contacterVendeur('${annonce.id}', '${annonce.vendeur_id}')">Contacter le vendeur</button>`
           }
         </div>
@@ -105,25 +105,6 @@ ${monIdUtilisateurAnnonces ? `<button class="bouton-favori-texte ${estFavori ? '
 
 chargerAnnonces();
 
-async function modifierAnnonce(annonceId, prixActuel) {
-  const nouveauPrix = prompt("Nouveau prix (€) :", prixActuel);
-  if (!nouveauPrix) return;
-  const prixNombre = parseFloat(nouveauPrix);
-  if (isNaN(prixNombre) || prixNombre <= 0) {
-    alert("Prix invalide.");
-    return;
-  }
-  const nouveauStatut = prixNombre >= 20 ? "en_attente" : "active";
-  const { error } = await supabaseClient
-    .from("annonces")
-    .update({ prix: prixNombre, statut: nouveauStatut })
-    .eq("id", annonceId);
-  if (error) {
-    alert("Erreur : " + error.message);
-    return;
-  }
-  window.location.reload();
-}
 
 async function ouvrirDetailAnnonce(annonceId) {
   const annonce = toutesLesAnnonces.find(a => a.id === annonceId);
@@ -164,8 +145,7 @@ async function ouvrirDetailAnnonce(annonceId) {
             <span>${annonce.nbFavoris} favori${annonce.nbFavoris > 1 ? "s" : ""}</span>
             ${estMoi ? `<span>${annonce.vues} vue${annonce.vues > 1 ? "s" : ""}</span>` : ""}
           </div>
-          <p>${annonce.stylos.lieu_ou_entreprise || ""}${annonce.stylos.ville ? " — " + annonce.stylos.ville : ""}${annonce.stylos.pays ? " (" + annonce.stylos.pays + ")" : ""}</p>
-          ${annonce.stylos.description ? `<p>${annonce.stylos.description}</p>` : ""}
+<p>${texteLieuEntreprise(annonce.stylos)}${annonce.stylos.ville ? " — " + annonce.stylos.ville : ""}${annonce.stylos.pays ? " (" + annonce.stylos.pays + ")" : ""}</p>          ${annonce.stylos.description ? `<p>${annonce.stylos.description}</p>` : ""}
           ${annonce.description ? `<p><em>${annonce.description}</em></p>` : ""}
           <a href="fiche-stylo.html?stylo=${annonce.stylo_id}" style="font-size:0.8rem; color: var(--bic-bleu);">Voir toutes les annonces de ce stylo →</a>
         </div>

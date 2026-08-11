@@ -1,5 +1,4 @@
-// ajouter.js — popup "Ajouter un stylo" : formulaire condensé (Nom/État/Rareté),
-// puis Touristique OU Publicitaire, puis "Faire une annonce" en option
+// ajouter.js — popup "Ajouter un stylo" : Touristique et/ou Publicitaire (les deux possibles ensemble)
 
 const RARETES_AJOUT = ["commun", "peu_commun", "rare", "tres_rare", "exceptionnel"];
 
@@ -10,7 +9,7 @@ const REGIONS_FRANCE = [
   "Guadeloupe", "Martinique", "Guyane", "La Réunion", "Mayotte"
 ];
 
-let typeChoisiAjout = null; // "touristique" | "publicitaire" | null
+let categoriesChoisiesAjout = new Set();
 let rareteChoisieAjout = "commun";
 let annonceActiveAjout = false;
 let fichierPrincipalAjout = null;
@@ -27,7 +26,7 @@ async function ouvrirModaleAjout() {
     return;
   }
 
-  typeChoisiAjout = null;
+  categoriesChoisiesAjout = new Set();
   rareteChoisieAjout = "commun";
   annonceActiveAjout = false;
   fichierPrincipalAjout = null;
@@ -76,7 +75,7 @@ async function ouvrirModaleAjout() {
         </label>
         <div class="apercu-photos" id="apercu-secondaires"></div>
 
-        <label>Type de stylo</label>
+        <label>Type de stylo (les deux sont possibles ensemble)</label>
         <div class="selecteur-type" id="selecteur-type">
           <div class="option-type" data-valeur="publicitaire">Publicitaire</div>
           <div class="option-type" data-valeur="touristique">Touristique</div>
@@ -153,11 +152,15 @@ async function ouvrirModaleAjout() {
   overlay.querySelectorAll(".option-type").forEach(el => {
     el.addEventListener("click", () => {
       const valeur = el.dataset.valeur;
-      typeChoisiAjout = (typeChoisiAjout === valeur) ? null : valeur;
-      overlay.querySelectorAll(".option-type").forEach(o => o.classList.remove("selectionnee"));
-      if (typeChoisiAjout) el.classList.add("selectionnee");
-      document.getElementById("zone-publicitaire").style.display = typeChoisiAjout === "publicitaire" ? "flex" : "none";
-      document.getElementById("zone-touristique").style.display = typeChoisiAjout === "touristique" ? "flex" : "none";
+      if (categoriesChoisiesAjout.has(valeur)) {
+        categoriesChoisiesAjout.delete(valeur);
+        el.classList.remove("selectionnee");
+      } else {
+        categoriesChoisiesAjout.add(valeur);
+        el.classList.add("selectionnee");
+      }
+      document.getElementById("zone-publicitaire").style.display = categoriesChoisiesAjout.has("publicitaire") ? "flex" : "none";
+      document.getElementById("zone-touristique").style.display = categoriesChoisiesAjout.has("touristique") ? "flex" : "none";
     });
   });
 
@@ -203,20 +206,21 @@ async function envoyerFormulaireAjout(e, session) {
   const utilisateurId = session.user.id;
   const nom = document.getElementById("ajout-nom").value;
 
-  if (!typeChoisiAjout) {
-    message.textContent = "Choisis si le stylo est Touristique ou Publicitaire.";
+  if (categoriesChoisiesAjout.size === 0) {
+    message.textContent = "Choisis Touristique, Publicitaire, ou les deux.";
     message.style.color = "red";
     return;
   }
 
-  let lieuOuEntreprise = "";
-  let ville = null, region = null, pays = "France", latitude = null, longitude = null;
-  let typeActivite = null;
+  let lieuOuEntreprise = null, ville = null, region = null, pays = "France", latitude = null, longitude = null;
+  let entrepriseRepresentee = null, typeActivite = null;
 
-  if (typeChoisiAjout === "publicitaire") {
-    lieuOuEntreprise = document.getElementById("ajout-entreprise").value;
+  if (categoriesChoisiesAjout.has("publicitaire")) {
+    entrepriseRepresentee = document.getElementById("ajout-entreprise").value || null;
     typeActivite = document.getElementById("ajout-type-activite").value || null;
-  } else {
+  }
+
+  if (categoriesChoisiesAjout.has("touristique")) {
     lieuOuEntreprise = document.getElementById("ajout-lieu-touristique").value;
     ville = document.getElementById("ajout-ville").value.trim() || null;
     pays = document.getElementById("ajout-pays").value.trim() || "France";
@@ -262,6 +266,7 @@ async function envoyerFormulaireAjout(e, session) {
       nom: nom,
       etat: document.getElementById("ajout-etat").value,
       lieu_ou_entreprise: lieuOuEntreprise,
+      entreprise_representee: entrepriseRepresentee,
       type_activite: typeActivite,
       ville: ville,
       region: region,
@@ -285,13 +290,13 @@ async function envoyerFormulaireAjout(e, session) {
     return;
   }
 
-  const { data: categorie } = await supabaseClient
+  const { data: categories } = await supabaseClient
     .from("categories")
-    .select("id")
-    .eq("nom", typeChoisiAjout)
-    .single();
-  if (categorie) {
-    await supabaseClient.from("stylo_categories").insert({ stylo_id: stylo.id, categorie_id: categorie.id });
+    .select("id, nom")
+    .in("nom", Array.from(categoriesChoisiesAjout));
+  if (categories && categories.length > 0) {
+    const liaisons = categories.map(c => ({ stylo_id: stylo.id, categorie_id: c.id }));
+    await supabaseClient.from("stylo_categories").insert(liaisons);
   }
 
   const photosAEnvoyer = [];
@@ -337,15 +342,21 @@ async function envoyerFormulaireAjout(e, session) {
 }
 
 function afficherSuccesAjout(statutInitial, raisonModeration, annonceCreee, annonceEnAttente) {
+  if (statutInitial === "valide") {
+    document.getElementById("modale-ajout").remove();
+    if (typeof chargerCatalogue === "function") chargerCatalogue();
+    return;
+  }
+
   document.getElementById("form-ajout-popup").style.display = "none";
   const zoneSucces = document.getElementById("ajout-succes");
   zoneSucces.style.display = "block";
   zoneSucces.innerHTML = `
     <div class="ajout-succes">
       <div class="coche">✓</div>
-      <h3>${statutInitial === "valide" ? "Stylo ajouté au catalogue !" : "Stylo envoyé pour validation"}</h3>
-      ${raisonModeration ? `<p class="badge-raison">${raisonModeration}</p>` : ""}
-      <p style="color:#6B6558;">${statutInitial === "valide" ? "Il apparaît déjà dans le catalogue." : "Il apparaîtra dans le catalogue une fois approuvé par un modérateur."}</p>
+      <h3>Stylo envoyé pour validation</h3>
+      <p class="badge-raison">${raisonModeration}</p>
+      <p style="color:#6B6558;">Il apparaîtra dans le catalogue une fois approuvé par un modérateur.</p>
       ${annonceCreee ? `<p style="color:#6B6558;">${annonceEnAttente ? "Ton annonce a été envoyée en modération (prix ≥ 20 €)." : "Ton annonce est déjà active."}</p>` : ""}
       <div style="margin-top:1.2rem; display:flex; gap:0.6rem; justify-content:center;">
         <button class="bouton-vendre" onclick="document.getElementById('modale-ajout').remove(); ouvrirModaleAjout();">Ajouter un autre stylo</button>
